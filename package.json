@@ -1,0 +1,59 @@
+{
+  "name": "dsh-github-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clone a GitHub repository into a chosen folder and register it as a DeepSeek Harness workspace.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Blackout",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blkot/dsh-github-workspace.git"
+  },
+  "homepage": "https://github.com/blkot/dsh-github-workspace#readme",
+  "bugs": {
+    "url": "https://github.com/blkot/dsh-github-workspace/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "github",
+    "workspace",
+    "clone"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0-0"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ]
+    }
+  }
+}

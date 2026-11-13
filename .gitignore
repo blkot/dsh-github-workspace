@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Logs and local scratch files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+coverage/
+
+# Environment and editor files
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

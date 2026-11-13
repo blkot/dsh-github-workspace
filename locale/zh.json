@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitHub 仓库工作区",
+    "description": "把 GitHub 仓库克隆到指定目录，并立即注册为 workspace。",
+    "detail": "docs/DETAIL.md"
+  }
+}

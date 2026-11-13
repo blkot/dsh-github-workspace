@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitHub workspaces",
+    "description": "Clone a GitHub repository into a folder you choose and add it as a workspace right away.",
+    "detail": "docs/DETAIL.md"
+  }
+}

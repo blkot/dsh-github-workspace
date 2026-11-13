@@ -1,0 +1,17 @@
+# dsh-github-workspace bundle patch: adds the clone-from-GitHub Workspace flow.
+#
+# `cloneRoot` is the suggested parent folder for clones; leave it empty to use
+# the Host account's Documents\deepseek-harness directory.
+# `gitCommand` is the executable git is run through, and `timeoutMs` bounds one
+# clone (default 10 minutes). `auth: auto` reads a token from a signed-in
+# GitHub CLI (`ghCommand`) so private repositories clone without touching the
+# user's git configuration; `auth: none` always uses plain git credentials.
+- insert:
+    - id: github-workspace
+      name: 'dsh-github-workspace'
+      config:
+        cloneRoot: ''
+        gitCommand: git
+        ghCommand: gh
+        auth: auto
+        timeoutMs: 600000

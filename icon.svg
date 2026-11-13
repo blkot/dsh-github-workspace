@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="GitHub workspaces">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#2563EB"/>
+  <rect x="17" y="15" width="30" height="34" rx="5" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M32 23v12" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="m26.5 30.5 5.5 5.5 5.5-5.5" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 41h16" fill="none" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+</svg>
