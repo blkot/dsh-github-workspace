@@ -1,6 +1,6 @@
 {
   "name": "dsh-github-workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Clone a GitHub repository into a chosen folder and register it as a DeepSeek Harness workspace.",
   "type": "module",

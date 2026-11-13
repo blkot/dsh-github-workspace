@@ -5,7 +5,8 @@ DeepSeek Harness 默认通过选择本地文件夹来添加 workspace。这个�
 ## 功能
 
 - **输入**：仓库 URL（`https://github.com/owner/repo`、`git@github.com:owner/repo.git`、`github.com/owner/repo`）或简写 `owner/repo`。
-- **目标目录**：输入或用系统文件夹选择器挑选父目录，仓库会克隆到 `<父目录>/<仓库名>`；父目录不存在时会自动创建。
+- **目标目录**：输入或用系统文件夹选择器挑选父目录，仓库会克隆到 `<父目录>/<仓库名>`；父目录不存在时会自动创建。上次克隆成功的父目录会记录在 Host 侧（跨浏览器共享），下次打开自动填入。
+- **浅克隆**：可选开关，只取最新一次提交（`git clone --depth 1`），体积更小、更快，代价是没有完整历史。
 - **克隆**：在 Host 进程里执行 `git clone`。检测到 GitHub CLI 已登录时（`gh auth login`），用它的 token 认证 HTTPS 克隆，私有仓库无需改动 git 全局配置；token 只作为一次性的环境配置传给 git，不出现在命令行、克隆地址或 `.git/config` 里。没有 gh 登录时退回本机 git 凭据与 SSH agent。交互式提示保持禁用，默认 10 分钟超时。
 - **加载为 workspace**：克隆成功后通过 Workspace 注册表登记该目录，侧边栏立即出现新的 workspace（所有已连接的浏览器都会同步），并自动打开其中的会话。
 

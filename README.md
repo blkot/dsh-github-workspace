@@ -12,6 +12,9 @@ English | [中文说明](README.zh.md)
   `github.com/owner/repo`, or an SSH remote such as `git@github.com:owner/repo.git`.
 - **Destination** — type a parent folder or pick one with the Host folder chooser.
   The checkout lands in `<parent>/<repo>`; missing parent folders are created.
+  The parent of the last successful clone is remembered and prefilled next time.
+- **Shallow clone** — an optional switch clones only the latest commit
+  (`git clone --depth 1`) for a smaller, faster checkout without full history.
 - **Private repositories** — when the GitHub CLI is signed in, its token
   authenticates the HTTPS clone. No SSH key required, and the user's git
   configuration is left untouched.
@@ -46,7 +49,9 @@ enabled. Changes to Host code load on the next application start.
 
 Click **Clone from GitHub** in the sidebar footer, directly above **Settings**.
 Enter a repository and the parent folder, then press **Clone and open**. The
-dialog shows the resolved destination before anything runs.
+dialog shows the resolved destination before anything runs. **Shallow clone**
+limits the checkout to the latest commit; the parent folder of the last
+successful clone is prefilled on the next open.
 
 The row collapses to an icon when the sidebar is a rail.
 

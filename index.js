@@ -13,7 +13,7 @@
  */
 
 import { execFile } from 'node:child_process'
-import { lstat, mkdir, readdir, rm, stat } from 'node:fs/promises'
+import { lstat, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
 
@@ -60,6 +60,8 @@ export function apply(ctx, config) {
     inflight: new Set(),
     /** Cached GitHub CLI token probe: `{ at, value }`. */
     ghToken: undefined,
+    /** Last parent folder a clone succeeded into; `undefined` until read. */
+    lastParent: undefined,
   }
 
   ctx.effect(() => ctx.webServer.register({
@@ -156,11 +158,58 @@ async function defaultsValue(settings, state) {
   const token = await resolveGitHubToken(settings, state)
   return {
     defaultParent,
+    /** Parent folder of the most recent successful clone, when one was recorded. */
+    lastParent: await readLastParent(state),
     separator: path.sep,
     home: homedir(),
     platform: process.platform,
     /** Which credential source a private repository will use. */
     auth: token === undefined ? 'none' : 'gh',
+  }
+}
+
+/**
+ * Location of the remembered parent folder: durable for the Host account and
+ * shared by every browser, rather than per-browser storage.
+ * @returns absolute JSON file path.
+ */
+function lastParentFile() {
+  const home = typeof process.env.DSH_HOME === 'string' && process.env.DSH_HOME !== ''
+    ? process.env.DSH_HOME
+    : path.join(homedir(), '.dsh')
+  return path.join(home, 'data', 'dsh-github-workspace', 'last-parent.json')
+}
+
+/**
+ * Read the remembered parent folder once per mount.
+ * @param state - per-mount caches.
+ * @returns the remembered absolute path, or null.
+ */
+async function readLastParent(state) {
+  if (state.lastParent !== undefined) return state.lastParent
+  try {
+    const parsed = JSON.parse(await readFile(lastParentFile(), 'utf8'))
+    state.lastParent = typeof parsed?.parent === 'string' && path.isAbsolute(parsed.parent) ? parsed.parent : null
+  } catch {
+    state.lastParent = null
+  }
+  return state.lastParent
+}
+
+/**
+ * Record the parent folder of a successful clone. Best effort: a write failure
+ * never fails the clone the user just got.
+ * @param state - per-mount caches.
+ * @param parent - absolute parent directory that received the checkout.
+ * @returns nothing.
+ */
+async function writeLastParent(state, parent) {
+  state.lastParent = parent
+  try {
+    await mkdir(path.dirname(lastParentFile()), { recursive: true })
+    await writeFile(lastParentFile(), `${JSON.stringify({ parent, updatedAt: new Date().toISOString() }, null, 2)}\n`, 'utf8')
+  } catch {
+    // Remembering the folder is a convenience; the clone already succeeded.
   }
 }
 
@@ -276,6 +325,7 @@ function documentsDirectory() {
  */
 async function cloneAndRegister(ctx, settings, state, payload, res) {
   const repo = parseRepository(payload.repo)
+  const shallow = payload.shallow === true
   const parentInput = typeof payload.parent === 'string' ? payload.parent.trim() : ''
   const parent = validateParent(parentInput === '' ? await defaultParentOf(settings, state) : parentInput)
   const target = path.join(parent, repo.name)
@@ -298,8 +348,8 @@ async function cloneAndRegister(ctx, settings, state, payload, res) {
     // A GitHub CLI session authenticates HTTPS clones without touching the
     // user's git configuration; SSH references keep using the SSH agent.
     const token = repo.transport === 'https' ? await resolveGitHubToken(settings, state) : undefined
-    await runGit(settings, ['clone', '--', repo.cloneUrl, target], abort.signal,
-      { token, ssh: repo.transport === 'ssh' })
+    const args = ['clone', ...(shallow ? ['--depth', '1'] : []), '--', repo.cloneUrl, target]
+    await runGit(settings, args, abort.signal, { token, ssh: repo.transport === 'ssh' })
     const gitDirectory = await stat(path.join(target, '.git')).catch(() => undefined)
     if (gitDirectory === undefined || !gitDirectory.isDirectory()) {
       throw new ApiError('clone-failed', 'git finished without creating a .git directory', 502)
@@ -310,6 +360,7 @@ async function cloneAndRegister(ctx, settings, state, payload, res) {
     } catch (error) {
       throw new ApiError('workspace-failed', reasonOf(error), 500)
     }
+    await writeLastParent(state, parent)
     return {
       workspace: {
         workspaceId: String(workspace.id),
@@ -317,6 +368,7 @@ async function cloneAndRegister(ctx, settings, state, payload, res) {
         title: workspace.title,
       },
       repo: { host: repo.host, owner: repo.owner, name: repo.name, cloneUrl: repo.cloneUrl },
+      shallow,
       target,
     }
   } catch (error) {

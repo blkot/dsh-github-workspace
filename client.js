@@ -21,6 +21,8 @@ window.__ModuleLoader__.load({
       'field.target': 'Destination',
       'hint.authGh': 'Signed in through the GitHub CLI: private repositories clone with that account.',
       'hint.authNone': 'No GitHub CLI session found. Public repositories clone directly; for a private one run "gh auth login" or use an SSH address.',
+      'field.shallow': 'Shallow clone',
+      'field.shallowHint': 'Only the latest commit (git clone --depth 1): smaller and faster, without full history.',
       'action.cancel': 'Cancel',
       'action.clone': 'Clone and open',
       'action.cloning': 'Cloning…',
@@ -56,6 +58,8 @@ window.__ModuleLoader__.load({
       'field.target': '目标位置',
       'hint.authGh': '已检测到 gh 登录，私有仓库会用该账号克隆。',
       'hint.authNone': '未检测到 gh 登录：公开仓库可直接克隆；私有仓库请先在终端运行 gh auth login，或改用 SSH 地址。',
+      'field.shallow': '浅克隆',
+      'field.shallowHint': '只取最新一次提交（git clone --depth 1），体积更小、更快，但没有完整历史。',
       'action.cancel': '取消',
       'action.clone': '克隆并打开',
       'action.cloning': '正在克隆…',
@@ -103,6 +107,8 @@ window.__ModuleLoader__.load({
       separator: '\\',
       busy: false,
       error: null,
+      /** Clone the latest commit only (`--depth 1`). */
+      shallow: false,
       /** 'gh' when the GitHub CLI can supply credentials, 'none', or null before the probe. */
       auth: null,
     })
@@ -194,7 +200,12 @@ window.__ModuleLoader__.load({
           auth: value?.auth === 'gh' ? 'gh' : 'none',
         }
         if (dialogStore.get().parent === '') {
-          patch.parent = typeof value?.defaultParent === 'string' ? value.defaultParent : ''
+          // The Host remembers the parent of the last successful clone and
+          // shares it with every browser; the platform default is the fallback.
+          const remembered = typeof value?.lastParent === 'string' && value.lastParent !== ''
+            ? value.lastParent
+            : typeof value?.defaultParent === 'string' ? value.defaultParent : ''
+          patch.parent = remembered
           patch.separator = typeof value?.separator === 'string' && value.separator !== '' ? value.separator : '\\'
         }
         dialogStore.set(patch)
@@ -252,7 +263,7 @@ window.__ModuleLoader__.load({
       dialogStore.set({ busy: true, error: null })
       let value
       try {
-        value = await post('clone', { repo, parent: state.parent.trim() })
+        value = await post('clone', { repo, parent: state.parent.trim(), shallow: state.shallow })
       } catch (error) {
         dialogStore.set({ busy: false, error: describeError(t, error) })
         return
@@ -340,7 +351,10 @@ window.__ModuleLoader__.load({
 .dshgws-browse:disabled { opacity: 0.6; cursor: default; }
 .dshgws-preview { margin: -4px 0 14px; font-size: 12px; color: var(--dsw-alias-label-secondary); word-break: break-all; }
 .dshgws-hint { margin: -6px 0 14px; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary); }
-.dshgws-hint--warn { color: var(--dsw-alias-state-warn-primary); }.dshgws-preview code { color: var(--dsw-alias-label-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.dshgws-hint--warn { color: var(--dsw-alias-state-warn-primary); }
+.dshgws-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.dshgws-check input { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-brand-primary); }
+.dshgws-check-hint { margin: 4px 0 0 22px; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary); }.dshgws-preview code { color: var(--dsw-alias-label-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .dshgws-error {
   margin-bottom: 12px; padding: 8px 10px; border-radius: 8px; font-size: 12.5px;
   color: var(--dsw-alias-state-error-primary); border: 1px solid var(--dsw-alias-state-error-primary);
@@ -431,6 +445,18 @@ window.__ModuleLoader__.load({
             state.auth === null ? null : h('div', {
               className: state.auth === 'gh' ? 'dshgws-hint' : 'dshgws-hint dshgws-hint--warn',
             }, t(state.auth === 'gh' ? 'hint.authGh' : 'hint.authNone')),
+            h('div', { className: 'dshgws-field' },
+              h('label', { className: 'dshgws-check' },
+                h('input', {
+                  type: 'checkbox',
+                  checked: state.shallow,
+                  disabled: busy,
+                  onChange: (event) => { dialogStore.set({ shallow: event.target.checked }) },
+                }),
+                h('span', null, t('field.shallow')),
+              ),
+              h('div', { className: 'dshgws-check-hint' }, t('field.shallowHint')),
+            ),
             h('div', { className: 'dshgws-field' },
               h('span', null, t('field.parent')),
               h('div', { className: 'dshgws-row' },
